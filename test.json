@@ -1,0 +1,1 @@
+ { foo : 1 , bar : 2 , baz : "hello world" , quuz : [ 10 , 20 , 30 ] } 
