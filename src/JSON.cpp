@@ -92,7 +92,7 @@ void JSON_node::get_array()
 
   this->advance(); // Consume prefix bracket
   this->skip_whitespace();
-  while(this->current != ']') {
+  while(this->peek() != ']') {
 
     // Consume next array item
     JSON_node* child = new JSON_node(this->filehandle);
@@ -190,9 +190,10 @@ void JSON_node::get_value()
     return;
   } else {
     // Must be either "null", "true" or "false"
-    if (this->is_alpha()) {
-      string += this->current;
+    while (true) {
       this->advance();
+      string += this->current;
+      if (!this->is_alpha()) break;
     }
     if (string == "null") {
       // Initialize self as null node
@@ -242,7 +243,7 @@ uint8_t JSON_node::peek()
 
 void JSON_node::error(std::string message)
 {
-  throw std::runtime_error(message);
+  throw std::runtime_error(message + ":" + (const char)this->current);
 }
 
 
@@ -296,6 +297,12 @@ void JSON_node::skip_whitespace()
 }
 
 
+
+std::ostream& JSON_node::dump_prefix(std::ostream& os, uint8_t depth)
+{
+  for (uint8_t i=0; i<depth; i++) os << "  ";
+}
+
 std::ostream& JSON_node::dump(std::ostream& os, uint8_t depth)
 {
   switch(this->node_type) {
@@ -309,30 +316,46 @@ std::ostream& JSON_node::dump(std::ostream& os, uint8_t depth)
       os << std::to_string(this->node_value.number_value);
       break;
     case JSON_nodetype::JSON_nodetype_string: 
-      os << '"' << this->node_value.string_value << '"';
+      os << '"' << *this->node_value.string_value << '"';
       break;
-    case JSON_nodetype::JSON_nodetype_array: 
-      if (this->node_value.array_value->size() > 0) {
+    case JSON_nodetype::JSON_nodetype_array: {
+      size_t count = this->node_value.array_value->size();
+      size_t index = 0;
+      if (count > 0) {
         os << "[" << std::endl;
-        for (auto& value : *this->node_value.array_value) value->dump(os, depth+1);
+        for (auto& value : *this->node_value.array_value) {
+          this->dump_prefix(os, depth+1);
+          value->dump(os, depth+1);
+          index++;
+          os << (index < count ? "," : "") << std::endl;
+        }
+        this->dump_prefix(os, depth);
         os << "]";
       } else {
         os << "[]";
       }
       break;
-    case JSON_nodetype::JSON_nodetype_object: 
-      if (this->objectkeys_index->size() > 0) {
+    }
+    case JSON_nodetype::JSON_nodetype_object: {
+      size_t count = this->objectkeys_index->size();
+      size_t index = 0;
+      if (count > 0) {
         os << "{" << std::endl;
         for (auto& key : *this->objectkeys_index) {
+          this->dump_prefix(os, depth+1);
+          os << key << ": ";
           this->node_value.objectvalues_value->at(key)->dump(os, depth+1);
+          index++;
+          os << (index < count ? "," : "") << std::endl;
         }
+        this->dump_prefix(os, depth);
         os << "}";
       } else {
         os << "{}";
       }
       break;
+    }
   }
-  os << std::endl;
   return os;
 }
 

@@ -42,6 +42,7 @@ class JSON_node {
     ~JSON_node();
 
     std::ostream& dump(std::ostream& os, uint8_t depth);
+    std::ostream& dump_prefix(std::ostream& os, uint8_t depth);
 
   protected:
 
@@ -86,11 +87,9 @@ class JSON
 
     friend std::ostream& operator<<(std::ostream& os, JSON& json)
     {
-      os << "<< operator invoked" << std::endl;
       if (json.root == nullptr) {
         os << "null" << std::endl;
       } else {
-        os << "dumping" << std::endl;
         json.root->dump(os, 0);
       }
       return os;
