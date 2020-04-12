@@ -1,10 +1,12 @@
 { 
 	boolean: true,
 	foo: 1 ,
-	bar: 2 , 
+	"bar": 2 , 
 	baz: "hello world" , 
-	quuz : [ 10 , 20 , 30, { working_as_intended: "yes", bugs: 0.0 } ],
+	"escape": "\n",
+	quuz : [ 10 , -20 , 3.14, { working_as_intended: "yes", bugs: 0.0 } ],
 	empty: [],
 	nullobj: {}
 }
+
 

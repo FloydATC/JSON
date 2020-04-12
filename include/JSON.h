@@ -34,29 +34,41 @@ union JSON_nodevalue {
 };
 
 
+/*
 
+  Each value in a JSON document is represented by a JSON_node
+  ARRAY and OBJECT nodes may contain 0 or more child nodes
 
+*/
 class JSON_node {
   public:
     JSON_node(std::ifstream& filehandle);
     ~JSON_node();
 
-    std::ostream& dump(std::ostream& os, uint8_t depth);
-    std::ostream& dump_prefix(std::ostream& os, uint8_t depth);
+    JSON_nodetype nodeType();
+
+    void dump(std::ostream& os, uint8_t depth);
 
   protected:
 
   private:
-    std::string return_object_key();
-    void get_object();
-    void get_array();
-    void get_quoted_string();
-    void get_value();
+    std::string find_object_key();
+    std::string find_quoted_string();
+    void parse_object();
+    void parse_array();
+    void parse_string();
+    void parse_value();
+    bool check_more_items();
+
+    void dump_prefix(std::ostream& os, uint8_t depth);
+    void dump_string(std::ostream& os, uint8_t depth);
+    void dump_array(std::ostream& os, uint8_t depth);
+    void dump_object(std::ostream& os, uint8_t depth);
+
     void consume(uint8_t c, std::string message);
     bool advance();
     uint8_t peek();
     void error(std::string message);
-    bool more_items();
     bool is_eof();
     bool is_key();
     bool is_digit();
@@ -72,7 +84,12 @@ class JSON_node {
     JSON_objectkeytype* objectkeys_index;
 };
 
+/*
 
+  JSON parser object - load/edit/dump/save JSON documents
+  Can contain one JSON_node as "root"
+
+*/
 
 class JSON
 {
@@ -100,9 +117,6 @@ class JSON
 	private:
 
 };
-
-
-
 
 
 #endif
