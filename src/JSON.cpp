@@ -289,6 +289,21 @@ void JSON_node::parse_value()
 }
 
 
+
+
+/*
+
+  Low level parsing functions
+
+*/
+
+void JSON_node::error(std::string message)
+{
+  std::string errormsg = message + " near byte " + std::to_string(this->filehandle.tellg()) + ": '" + (const char)this->peek() + "'";
+  throw std::runtime_error(errormsg);
+}
+
+
 void JSON_node::consume(uint8_t c, std::string message)
 {
   this->skip_whitespace();
@@ -311,13 +326,6 @@ uint8_t JSON_node::peek()
 {
   if (this->is_eof()) return 0;
   return this->filehandle.peek();
-}
-
-
-void JSON_node::error(std::string message)
-{
-  std::string errormsg = message + " near byte " + std::to_string(this->filehandle.tellg()) + ": '" + (const char)this->peek() + "'";
-  throw std::runtime_error(errormsg);
 }
 
 
@@ -372,6 +380,14 @@ void JSON_node::skip_whitespace()
 
 
 
+
+/*
+
+  Dump functions
+
+*/
+
+
 void JSON_node::dump_prefix(std::ostream& os, uint8_t depth) const
 {
   for (uint8_t i=0; i<depth; i++) os << "  ";
@@ -380,7 +396,20 @@ void JSON_node::dump_prefix(std::ostream& os, uint8_t depth) const
 
 void JSON_node::dump_string(std::ostream& os, uint8_t depth) const
 {
-  os << '"' << *this->node_value.string_value << '"';
+  os << '"';
+  for (auto &c : *this->node_value.string_value) {
+    switch (c) {
+      case '\b': os << "\\b"; break;
+      case '\f': os << "\\f"; break;
+      case '\n': os << "\\n"; break;
+      case '\r': os << "\\r"; break;
+      case '\t': os << "\\t"; break;
+      case '"': os << "\\" << '"'; break;
+      case '\\': os << "\\\\"; break;
+      default: os << c;
+    }
+  }
+  os << '"';
 }
 
 
