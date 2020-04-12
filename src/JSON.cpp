@@ -34,12 +34,32 @@ void JSON::load(std::string filename)
 }
 
 
-void JSON::save(std::string filename)
+void JSON::save(std::string filename) const
 {
 	if (this->root == nullptr) return;
-	
+
+  std::ofstream filehandle(filename);
+  if (filehandle.is_open()) {
+    filehandle << *this << std::endl;
+    filehandle.close();
+  }
 }
 
+
+void JSON::dump(std::ostream& os) const
+{
+  if (this->root == nullptr) {
+    os << "null" << std::endl;
+  } else {
+    this->root->dump(os, 0);
+  }
+}
+
+std::ostream& operator<< (std::ostream& os, const JSON& json)
+{
+  json.dump(os);
+  return os;
+}
 
 
 JSON_node::JSON_node(std::ifstream& filehandle) : filehandle(filehandle)
@@ -352,19 +372,19 @@ void JSON_node::skip_whitespace()
 
 
 
-void JSON_node::dump_prefix(std::ostream& os, uint8_t depth)
+void JSON_node::dump_prefix(std::ostream& os, uint8_t depth) const
 {
   for (uint8_t i=0; i<depth; i++) os << "  ";
 }
 
 
-void JSON_node::dump_string(std::ostream& os, uint8_t depth)
+void JSON_node::dump_string(std::ostream& os, uint8_t depth) const
 {
   os << '"' << *this->node_value.string_value << '"';
 }
 
 
-void JSON_node::dump_array(std::ostream& os, uint8_t depth)
+void JSON_node::dump_array(std::ostream& os, uint8_t depth) const
 {
   size_t count = this->node_value.array_value->size();
   size_t index = 0;
@@ -384,7 +404,7 @@ void JSON_node::dump_array(std::ostream& os, uint8_t depth)
 }
 
 
-void JSON_node::dump_object(std::ostream& os, uint8_t depth)
+void JSON_node::dump_object(std::ostream& os, uint8_t depth) const
 {
   size_t count = this->objectkeys_index->size();
   size_t index = 0;
@@ -405,7 +425,7 @@ void JSON_node::dump_object(std::ostream& os, uint8_t depth)
 }
 
 
-void JSON_node::dump(std::ostream& os, uint8_t depth)
+void JSON_node::dump(std::ostream& os, uint8_t depth) const
 {
   switch(this->node_type) {
     case JSON_nodetype::JSON_nodetype_null: 

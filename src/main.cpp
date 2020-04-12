@@ -17,6 +17,8 @@ int main(int argc, char* argv[])
     // Pretty-print JSON to STDOUT
     std::cout << json << std::endl;
 
+    json.save("copy.json");
+
   }
 
   return 0;

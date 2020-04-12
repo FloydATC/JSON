@@ -47,7 +47,7 @@ class JSON_node {
 
     JSON_nodetype nodeType();
 
-    void dump(std::ostream& os, uint8_t depth);
+    void dump(std::ostream& os, uint8_t depth) const;
 
   protected:
 
@@ -60,10 +60,10 @@ class JSON_node {
     void parse_value();
     bool check_more_items();
 
-    void dump_prefix(std::ostream& os, uint8_t depth);
-    void dump_string(std::ostream& os, uint8_t depth);
-    void dump_array(std::ostream& os, uint8_t depth);
-    void dump_object(std::ostream& os, uint8_t depth);
+    void dump_prefix(std::ostream& os, uint8_t depth) const;
+    void dump_string(std::ostream& os, uint8_t depth) const;
+    void dump_array(std::ostream& os, uint8_t depth) const;
+    void dump_object(std::ostream& os, uint8_t depth) const;
 
     void consume(uint8_t c, std::string message);
     bool advance();
@@ -98,25 +98,17 @@ class JSON
 	  ~JSON();
 
 	  void load(std::string filename);
-	  void save(std::string filename);
-
-    JSON_node* root;
-
-    friend std::ostream& operator<<(std::ostream& os, JSON& json)
-    {
-      if (json.root == nullptr) {
-        os << "null" << std::endl;
-      } else {
-        json.root->dump(os, 0);
-      }
-      return os;
-    }
+	  void save(std::string filename) const;
+    void dump(std::ostream& os) const;
 
 	protected:
 
 	private:
+    JSON_node* root;
 
 };
+
+std::ostream& operator<< (std::ostream& os, const JSON& json);
 
 
 #endif
