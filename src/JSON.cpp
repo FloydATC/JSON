@@ -4,19 +4,19 @@
 
 JSON::JSON()
 {
-	this->root = nullptr;
+  this->root = nullptr;
 }
 
 
 JSON::~JSON()
 {
-	if (this->root != nullptr) delete this->root;
+  if (this->root != nullptr) delete this->root;
 }
 
 
 void JSON::load(std::string filename)
 {
-	if (this->root != nullptr) delete this->root;
+  if (this->root != nullptr) delete this->root;
 
   std::ifstream filehandle(filename);
   if (filehandle.is_open()) {
@@ -36,7 +36,7 @@ void JSON::load(std::string filename)
 
 void JSON::save(std::string filename) const
 {
-	if (this->root == nullptr) return;
+  if (this->root == nullptr) return;
 
   std::ofstream filehandle(filename);
   if (filehandle.is_open()) {

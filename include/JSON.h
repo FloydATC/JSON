@@ -93,17 +93,17 @@ class JSON_node {
 
 class JSON
 {
-	public:
-	  JSON();
-	  ~JSON();
+  public:
+    JSON();
+    ~JSON();
 
-	  void load(std::string filename);
-	  void save(std::string filename) const;
+    void load(std::string filename);
+    void save(std::string filename) const;
     void dump(std::ostream& os) const;
 
-	protected:
+  protected:
 
-	private:
+  private:
     JSON_node* root;
 
 };
