@@ -22,15 +22,14 @@ enum class JSON_nodetype {
 
 typedef std::string JSON_stringtype;
 typedef std::vector<JSON_node*> JSON_arraytype;
-typedef std::vector<std::string> JSON_objectkeytype;
-typedef std::unordered_map<std::string, JSON_node*> JSON_objectvaluetype;
+typedef std::unordered_map<std::string, JSON_node*> JSON_objecttype;
 
 union JSON_nodevalue {
   bool boolean_value;
   double number_value;
   JSON_stringtype* string_value;
   JSON_arraytype* array_value;
-  JSON_objectvaluetype* objectvalues_value;
+  JSON_objecttype* object_value;
 };
 
 
@@ -92,7 +91,6 @@ class JSON_node {
     uint8_t current;
     JSON_nodetype node_type;
     JSON_nodevalue node_value;
-    JSON_objectkeytype* objectkeys_index;
 };
 
 std::ostream& operator<< (std::ostream& os, const JSON_node& json);

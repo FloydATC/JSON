@@ -1,6 +1,7 @@
 #include "JSON.h"
 
 #include <sstream>
+#include <algorithm>
 
 std::ostream& operator<< (std::ostream& ostream, const JSON& json)
 {
@@ -147,9 +148,8 @@ JSON_node::~JSON_node()
       delete this->node_value.array_value; 
       break;
     case JSON_nodetype::JSON_nodetype_object: 
-      for (auto& pair : *this->node_value.objectvalues_value) delete pair.second;
-      delete this->objectkeys_index; 
-      delete this->node_value.objectvalues_value; 
+      for (auto& pair : *this->node_value.object_value) delete pair.second;
+      delete this->node_value.object_value; 
       break;
   }
 }
@@ -254,8 +254,7 @@ void JSON_node::parse_object()
 {
   // Initialize self as object node
   this->node_type = JSON_nodetype::JSON_nodetype_object;
-  this->objectkeys_index = new JSON_objectkeytype();
-  this->node_value.objectvalues_value = new JSON_objectvaluetype();
+  this->node_value.object_value = new JSON_objecttype();
 
   this->advance(); // Consume prefix curly
   this->skip_whitespace();
@@ -271,8 +270,7 @@ void JSON_node::parse_object()
     JSON_node* value = new JSON_node(this->istream);
 
     // Add key/value pair to self
-    this->objectkeys_index->push_back( key );
-    this->node_value.objectvalues_value->insert({ key, value });
+    this->node_value.object_value->insert({ key, value });
 
     // Look for comma
     if (!this->check_more_items()) break;
@@ -473,12 +471,14 @@ void JSON_node::dump_array(std::ostream& os, uint8_t depth) const
   size_t index = 0;
   if (count > 0) {
     os << "[" << std::endl;
+
     for (auto& value : *this->node_value.array_value) {
       this->dump_prefix(os, depth+1);
       value->dump(os, depth+1);
       index++;
       os << (index < count ? "," : "") << std::endl;
     }
+    
     this->dump_prefix(os, depth);
     os << "]";
   } else {
@@ -489,17 +489,26 @@ void JSON_node::dump_array(std::ostream& os, uint8_t depth) const
 
 void JSON_node::dump_object(std::ostream& os, uint8_t depth) const
 {
-  size_t count = this->objectkeys_index->size();
+  size_t count = this->node_value.object_value->size();
   size_t index = 0;
   if (count > 0) {
     os << "{" << std::endl;
-    for (auto& key : *this->objectkeys_index) {
+
+    // Get keys in alphabetical order
+    std::vector<std::string> keys;
+    for (auto& pair : *this->node_value.object_value) keys.push_back(pair.first);
+    std::sort(keys.begin(), keys.end());
+
+    // Dump key/value pairs
+    for (auto& key : keys) {
       this->dump_prefix(os, depth+1);
       os << "\"" << key << "\": ";
-      this->node_value.objectvalues_value->at(key)->dump(os, depth+1);
+      JSON_node* child = this->node_value.object_value->at(key);
+      child->dump(os, depth+1);
       index++;
       os << (index < count ? "," : "") << std::endl;
     }
+
     this->dump_prefix(os, depth);
     os << "}";
   } else {
@@ -589,7 +598,7 @@ JSON_node* JSON_node::getChildByIndex(size_t index)
 JSON_node* JSON_node::getChildByKey(std::string key)
 {
   if (this->node_type != JSON_nodetype::JSON_nodetype_object) return nullptr;
-  if (this->node_value.objectvalues_value->count(key) == 0) return nullptr;
-  return this->node_value.objectvalues_value->at(key);
+  if (this->node_value.object_value->count(key) == 0) return nullptr;
+  return this->node_value.object_value->at(key);
 }
 
