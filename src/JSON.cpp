@@ -1,5 +1,6 @@
 #include "JSON.h"
 
+#include <sstream>
 
 std::ostream& operator<< (std::ostream& ostream, const JSON& json)
 {
@@ -17,13 +18,15 @@ std::istream& operator>> (std::istream& istream, JSON& json)
 
 JSON::JSON()
 {
-  this->root = nullptr;
+  std::stringstream sstream;
+  sstream << "null";
+  this->root = new JSON_node(sstream);
 }
 
 
 JSON::~JSON()
 {
-  if (this->root != nullptr) delete this->root;
+  delete this->root;
 }
 
 
@@ -39,17 +42,8 @@ void JSON::load(std::string filename)
 
 void JSON::parse(std::istream& istream)
 {
-  if (this->root != nullptr) delete this->root;
-
+  delete this->root;
   this->root = new JSON_node(istream);
-
-  // Special case: If the root node is of type NULL,
-  // the JSON document is empty or contains null,
-  // and the JSON_node object is pointless
-  if (this->root->nodeType() == JSON_nodetype::JSON_nodetype_null) {
-    delete this->root;
-    this->root = nullptr;
-  }
 }
 
 
@@ -67,12 +61,31 @@ void JSON::save(std::string filename) const
 
 void JSON::dump(std::ostream& ostream) const
 {
-  if (this->root == nullptr) {
-    ostream << "null" << std::endl;
-  } else {
-    this->root->dump(ostream, 0);
-  }
+  ostream << *this->root;
 }
+
+
+JSON_node* JSON::getNode(std::string path)
+{
+  JSON_node* current_node = this->root;
+
+  std::stringstream sstream(path);
+  std::string id;
+  while (getline(sstream, id, '.')) {
+    if (current_node->isArray()) {
+      current_node = current_node->getChildByIndex(std::stoul(id));
+      if (current_node != nullptr) continue;
+    }
+    if (current_node->isObject()) {
+      current_node = current_node->getChildByKey(id);
+      if (current_node != nullptr) continue;
+    }
+    throw std::runtime_error("JSON node not found: '" + path +"'");
+  }
+  return current_node;
+}
+
+
 
 
 
@@ -81,6 +94,13 @@ void JSON::dump(std::ostream& ostream) const
   The real work is carried out by the JSON_node class
 
 */
+
+
+std::ostream& operator<< (std::ostream& ostream, const JSON_node& json_node)
+{
+  json_node.dump(ostream, 0);
+  return ostream;
+}
 
 
 JSON_node::JSON_node(std::istream& istream) : istream(istream)
@@ -503,5 +523,58 @@ void JSON_node::dump(std::ostream& os, uint8_t depth) const
       break;
     }
   }
+}
+
+
+
+bool JSON_node::isNull()
+{
+  return this->node_type == JSON_nodetype::JSON_nodetype_null;
+}
+
+
+bool JSON_node::isBoolean()
+{
+  return this->node_type == JSON_nodetype::JSON_nodetype_null;
+}
+
+
+bool JSON_node::isNumber()
+{
+  return this->node_type == JSON_nodetype::JSON_nodetype_number;
+}
+
+
+bool JSON_node::isString()
+{
+  return this->node_type == JSON_nodetype::JSON_nodetype_string;
+}
+
+
+bool JSON_node::isArray()
+{
+  return this->node_type == JSON_nodetype::JSON_nodetype_array;
+}
+
+
+bool JSON_node::isObject()
+{
+  return this->node_type == JSON_nodetype::JSON_nodetype_object;
+}
+
+
+JSON_node* JSON_node::getChildByIndex(size_t index)
+{
+  if (this->node_type != JSON_nodetype::JSON_nodetype_array) return nullptr;
+  if (index >= this->node_value.array_value->size()) return nullptr;
+  return this->node_value.array_value->at(index);
+}
+
+
+JSON_node* JSON_node::getChildByKey(std::string key)
+{
+  if (this->node_type != JSON_nodetype::JSON_nodetype_object) return nullptr;
+  if (this->node_value.objectvalues_value->count(key) == 0) return nullptr;
+  return this->node_value.objectvalues_value->at(key);
 }
 

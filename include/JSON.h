@@ -49,6 +49,16 @@ class JSON_node {
 
     void dump(std::ostream& ostream, uint8_t depth) const;
 
+    bool isNull();
+    bool isBoolean();
+    bool isNumber();
+    bool isString();
+    bool isArray();
+    bool isObject();
+
+    JSON_node* getChildByIndex(size_t index);
+    JSON_node* getChildByKey(std::string key);
+
   protected:
 
   private:
@@ -76,13 +86,15 @@ class JSON_node {
     bool is_whitespace();
     void skip_whitespace();
 
-
     std::istream& istream;
     uint8_t current;
     JSON_nodetype node_type;
     JSON_nodevalue node_value;
     JSON_objectkeytype* objectkeys_index;
 };
+
+std::ostream& operator<< (std::ostream& os, const JSON_node& json);
+
 
 /*
 
@@ -101,6 +113,8 @@ class JSON
     void parse(std::istream& istream);
     void save(std::string filename) const;
     void dump(std::ostream& ostream) const;
+
+    JSON_node* getNode(std::string path);
 
   protected:
 
