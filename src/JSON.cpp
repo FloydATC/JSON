@@ -131,16 +131,16 @@ JSON_node::~JSON_node()
     case JSON_nodetype::JSON_nodetype_number: 
       break;
     case JSON_nodetype::JSON_nodetype_string: 
-      delete (JSON_stringtype*)this->node_value.string_value; 
+      delete this->node_value.string_value; 
       break;
     case JSON_nodetype::JSON_nodetype_array: 
       for (auto& value : *this->node_value.array_value) delete value;
-      delete (JSON_arraytype*)this->node_value.array_value; 
+      delete this->node_value.array_value; 
       break;
     case JSON_nodetype::JSON_nodetype_object: 
       for (auto& pair : *this->node_value.objectvalues_value) delete pair.second;
-      delete (JSON_objectkeytype*)this->objectkeys_index; 
-      delete (JSON_objectvaluetype*)this->node_value.objectvalues_value; 
+      delete this->objectkeys_index; 
+      delete this->node_value.objectvalues_value; 
       break;
   }
 }
