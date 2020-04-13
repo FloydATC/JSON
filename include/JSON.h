@@ -42,12 +42,12 @@ union JSON_nodevalue {
 */
 class JSON_node {
   public:
-    JSON_node(std::ifstream& filehandle);
+    JSON_node(std::istream& istream);
     ~JSON_node();
 
     JSON_nodetype nodeType();
 
-    void dump(std::ostream& os, uint8_t depth) const;
+    void dump(std::ostream& ostream, uint8_t depth) const;
 
   protected:
 
@@ -77,7 +77,7 @@ class JSON_node {
     void skip_whitespace();
 
 
-    std::ifstream& filehandle;
+    std::istream& istream;
     uint8_t current;
     JSON_nodetype node_type;
     JSON_nodevalue node_value;
@@ -98,8 +98,9 @@ class JSON
     ~JSON();
 
     void load(std::string filename);
+    void parse(std::istream& istream);
     void save(std::string filename) const;
-    void dump(std::ostream& os) const;
+    void dump(std::ostream& ostream) const;
 
   protected:
 
@@ -109,6 +110,7 @@ class JSON
 };
 
 std::ostream& operator<< (std::ostream& os, const JSON& json);
+std::istream& operator>> (std::istream& is, JSON& json);
 
 
 #endif

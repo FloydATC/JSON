@@ -1,6 +1,19 @@
 #include "JSON.h"
 
 
+std::ostream& operator<< (std::ostream& ostream, const JSON& json)
+{
+  json.dump(ostream);
+  return ostream;
+}
+
+
+std::istream& operator>> (std::istream& istream, JSON& json)
+{
+  json.parse(istream);
+  return istream;
+}
+
 
 JSON::JSON()
 {
@@ -16,20 +29,26 @@ JSON::~JSON()
 
 void JSON::load(std::string filename)
 {
-  if (this->root != nullptr) delete this->root;
-
   std::ifstream filehandle(filename);
   if (filehandle.is_open()) {
-    this->root = new JSON_node(filehandle);
+    filehandle >> *this;
     filehandle.close();
+  }
+}
 
-    // Special case: If the root node is of type NULL,
-    // the JSON document is empty and the JSON_node object is pointless
-    if (this->root->nodeType() == JSON_nodetype::JSON_nodetype_null) {
-      delete this->root;
-      this->root = nullptr;
-    }
 
+void JSON::parse(std::istream& istream)
+{
+  if (this->root != nullptr) delete this->root;
+
+  this->root = new JSON_node(istream);
+
+  // Special case: If the root node is of type NULL,
+  // the JSON document is empty or contains null,
+  // and the JSON_node object is pointless
+  if (this->root->nodeType() == JSON_nodetype::JSON_nodetype_null) {
+    delete this->root;
+    this->root = nullptr;
   }
 }
 
@@ -46,23 +65,25 @@ void JSON::save(std::string filename) const
 }
 
 
-void JSON::dump(std::ostream& os) const
+void JSON::dump(std::ostream& ostream) const
 {
   if (this->root == nullptr) {
-    os << "null" << std::endl;
+    ostream << "null" << std::endl;
   } else {
-    this->root->dump(os, 0);
+    this->root->dump(ostream, 0);
   }
 }
 
-std::ostream& operator<< (std::ostream& os, const JSON& json)
-{
-  json.dump(os);
-  return os;
-}
 
 
-JSON_node::JSON_node(std::ifstream& filehandle) : filehandle(filehandle)
+/*
+
+  The real work is carried out by the JSON_node class
+
+*/
+
+
+JSON_node::JSON_node(std::istream& istream) : istream(istream)
 {
   this->skip_whitespace();
 
@@ -76,6 +97,7 @@ JSON_node::JSON_node(std::ifstream& filehandle) : filehandle(filehandle)
     case '"': this->parse_string(); break;
     default: this->parse_value(); break;
   }
+
 }
 
 
@@ -122,6 +144,7 @@ bool JSON_node::check_more_items()
   }
 }
 
+
 void JSON_node::parse_array()
 {
   // Initialize self as array node
@@ -133,7 +156,7 @@ void JSON_node::parse_array()
   while(this->peek() != ']') {
 
     // Consume next array item
-    JSON_node* child = new JSON_node(this->filehandle);
+    JSON_node* child = new JSON_node(this->istream);
 
     // Add item to self
     this->node_value.array_value->push_back(child);
@@ -148,7 +171,8 @@ void JSON_node::parse_array()
 std::string JSON_node::find_object_key()
 {
   std::string key;
-  // JSON object key may or may not be quoted
+  // Strictly speaking, unquoted keys are disallowed in JSON 
+  // but it's a very common error so we allow it when parsing
 
   if (this->peek() == '"') {
     key = this->find_quoted_string();
@@ -196,6 +220,7 @@ std::string JSON_node::find_quoted_string()
   return string;
 }
 
+
 void JSON_node::parse_object()
 {
   // Initialize self as object node
@@ -214,7 +239,7 @@ void JSON_node::parse_object()
     this->consume(':', "Expected : separator after object key '" + key + "'");
 
     // Consume next item value
-    JSON_node* value = new JSON_node(filehandle);
+    JSON_node* value = new JSON_node(this->istream);
 
     // Add key/value pair to self
     this->objectkeys_index->push_back( key );
@@ -299,7 +324,7 @@ void JSON_node::parse_value()
 
 void JSON_node::error(std::string message)
 {
-  std::string errormsg = message + " near byte " + std::to_string(this->filehandle.tellg()) + ": '" + (const char)this->peek() + "'";
+  std::string errormsg = message + " near byte " + std::to_string(this->istream.tellg()) + ": '" + (const char)this->peek() + "'";
   throw std::runtime_error(errormsg);
 }
 
@@ -316,7 +341,7 @@ bool JSON_node::advance()
 {
   if (this->is_eof()) return false;
   char c;
-  this->filehandle.get(c);
+  this->istream.get(c);
   this->current = c;
   return true;
 }
@@ -325,13 +350,13 @@ bool JSON_node::advance()
 uint8_t JSON_node::peek()
 {
   if (this->is_eof()) return 0;
-  return this->filehandle.peek();
+  return this->istream.peek();
 }
 
 
 bool JSON_node::is_eof()
 {
-  return this->filehandle.eof();
+  return this->istream.eof();
 }
 
 
