@@ -47,7 +47,7 @@ class JSON_node {
 
     JSON_nodetype nodeType();
 
-    void dump(std::ostream& ostream, uint8_t depth) const;
+    void dump(std::ostream& ostream) const;
 
     bool isNull();
     bool isBoolean();
@@ -74,6 +74,7 @@ class JSON_node {
     void dump_string(std::ostream& os, uint8_t depth) const;
     void dump_array(std::ostream& os, uint8_t depth) const;
     void dump_object(std::ostream& os, uint8_t depth) const;
+    void dump(std::ostream& ostream, uint8_t depth) const;
 
     void consume(uint8_t c, std::string message);
     bool advance();

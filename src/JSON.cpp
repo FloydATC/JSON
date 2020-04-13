@@ -98,7 +98,7 @@ JSON_node* JSON::getNode(std::string path)
 
 std::ostream& operator<< (std::ostream& ostream, const JSON_node& json_node)
 {
-  json_node.dump(ostream, 0);
+  json_node.dump(ostream);
   return ostream;
 }
 
@@ -496,6 +496,12 @@ void JSON_node::dump_object(std::ostream& os, uint8_t depth) const
   } else {
     os << "{}";
   }
+}
+
+
+void JSON_node::dump(std::ostream& os) const
+{
+  this->dump(os, 0);
 }
 
 
