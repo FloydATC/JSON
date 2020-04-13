@@ -42,6 +42,8 @@ union JSON_nodevalue {
 class JSON_node {
   public:
     JSON_node();
+    JSON_node(double value);
+    JSON_node(std::string value);
     JSON_node(std::istream* istream);
     ~JSON_node();
 
@@ -58,6 +60,9 @@ class JSON_node {
 
     JSON_node* getChildByIndex(size_t index);
     JSON_node* getChildByKey(std::string key);
+    void setChildByIndex(size_t index, JSON_node* node);
+    void setChildByKey(std::string key, JSON_node* node);
+    void addChildNode(JSON_node* node);
 
   protected:
 
@@ -115,11 +120,18 @@ class JSON
     void dump(std::ostream& ostream) const;
 
     JSON_node* getNode(std::string path);
+    void setNode(std::string path, JSON_node* node);
+    void setBoolean(std::string path, bool value);
+    void setNumber(std::string path, double value);
+    void setString(std::string path, std::string string);
 
   protected:
 
   private:
     JSON_node* root;
+
+    std::vector<std::string> split_path_elements(std::string path);
+    std::string join_path_elements(std::vector<std::string> elements);
 
 };
 

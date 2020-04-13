@@ -66,26 +66,90 @@ void JSON::dump(std::ostream& ostream) const
 }
 
 
-JSON_node* JSON::getNode(std::string path)
+std::vector<std::string> JSON::split_path_elements(std::string path)
 {
-  JSON_node* current_node = this->root;
-
+  std::vector<std::string> elements; 
   std::stringstream sstream(path);
   std::string id;
-  while (getline(sstream, id, '.')) {
-    if (current_node->isArray()) {
-      current_node = current_node->getChildByIndex(std::stoul(id));
-      if (current_node != nullptr) continue;
-    }
-    if (current_node->isObject()) {
-      current_node = current_node->getChildByKey(id);
-      if (current_node != nullptr) continue;
-    }
-    throw std::runtime_error("JSON node not found: '" + path +"'");
-  }
-  return current_node;
+  while (getline(sstream, id, '.')) elements.push_back(id);
+  return elements;
 }
 
+
+std::string JSON::join_path_elements(std::vector<std::string> elements)
+{
+  return "";
+}
+
+
+JSON_node* JSON::getNode(std::string path)
+{
+  JSON_node* parent_node = this->root;
+
+  for (auto& id : this->split_path_elements(path)) {
+    // Is the parent node an array?
+    if (parent_node->isArray()) {
+      parent_node = parent_node->getChildByIndex(std::stoul(id));
+      if (parent_node != nullptr) continue;
+    }
+    // Is the parent node an object?
+    if (parent_node->isObject()) {
+      parent_node = parent_node->getChildByKey(id);
+      if (parent_node != nullptr) continue;
+    }
+    // None of the above? Then it can't have an id
+    return nullptr;
+  }
+  return parent_node;
+}
+
+
+void JSON::setNode(std::string path, JSON_node* node)
+{
+  if (path == "") {
+    delete this->root;
+    this->root = node;
+  } else {
+    std::vector<std::string> elements = this->split_path_elements(path);
+    std::string id = elements.back();
+    elements.pop_back();
+    std::string parent_path = this->join_path_elements(elements);
+    JSON_node* parent_node = this->getNode(parent_path);
+    if (parent_node == nullptr) throw std::runtime_error("Not found: '" + path + "'");
+    // Is the parent node an array?
+    if (parent_node->isArray()) {
+      parent_node->setChildByIndex(std::stoul(id), node);
+      return;
+    }
+    // Is the parent node an object?
+    if (parent_node->isObject()) {
+      parent_node->setChildByKey(id, node);
+      return;
+    }
+    // None of the above? Then it can't have an id
+    if (parent_node == nullptr) throw std::runtime_error("Not a container node: '" + parent_path + "'");
+  }
+}
+
+
+void JSON::setBoolean(std::string path, bool value) 
+{
+  std::stringstream sstream;
+  sstream << (value ? "true" : "false");
+  this->setNode(path, new JSON_node(&sstream) );
+}
+
+
+void JSON::setNumber(std::string path, double value) 
+{
+  this->setNode(path, new JSON_node(value) );
+}
+
+
+void JSON::setString(std::string path, std::string value) 
+{
+  this->setNode(path, new JSON_node(value) );
+}
 
 
 
@@ -108,6 +172,22 @@ JSON_node::JSON_node()
 {
   // Set default node type = null
   this->node_type = JSON_nodetype::JSON_nodetype_null;
+  this->istream = nullptr;
+}
+
+
+JSON_node::JSON_node(double value)
+{
+  this->node_type = JSON_nodetype::JSON_nodetype_number;
+  this->node_value.number_value = value;
+  this->istream = nullptr;
+}
+
+
+JSON_node::JSON_node(std::string value)
+{
+  this->node_type = JSON_nodetype::JSON_nodetype_string;
+  this->node_value.string_value = new std::string(value);
   this->istream = nullptr;
 }
 
@@ -478,7 +558,7 @@ void JSON_node::dump_array(std::ostream& os, uint8_t depth) const
       index++;
       os << (index < count ? "," : "") << std::endl;
     }
-    
+
     this->dump_prefix(os, depth);
     os << "]";
   } else {
@@ -494,7 +574,7 @@ void JSON_node::dump_object(std::ostream& os, uint8_t depth) const
   if (count > 0) {
     os << "{" << std::endl;
 
-    // Get keys in alphabetical order
+    // Get keys in sort order
     std::vector<std::string> keys;
     for (auto& pair : *this->node_value.object_value) keys.push_back(pair.first);
     std::sort(keys.begin(), keys.end());
@@ -600,5 +680,41 @@ JSON_node* JSON_node::getChildByKey(std::string key)
   if (this->node_type != JSON_nodetype::JSON_nodetype_object) return nullptr;
   if (this->node_value.object_value->count(key) == 0) return nullptr;
   return this->node_value.object_value->at(key);
+}
+
+
+void JSON_node::setChildByIndex(size_t index, JSON_node* node)
+{
+  if (this->node_type != JSON_nodetype::JSON_nodetype_array) {
+    throw std::runtime_error("Not an array node");
+  }
+  if (index > this->node_value.array_value->size() -1) {
+    throw std::runtime_error("Index out of range");
+  }
+  // Destroy existing node before replacing
+  delete this->node_value.array_value->at(index);
+  this->node_value.array_value->at(index) = node;
+}
+
+
+void JSON_node::setChildByKey(std::string key, JSON_node* node)
+{
+  if (this->node_type != JSON_nodetype::JSON_nodetype_object) {
+    throw std::runtime_error("Not an array node");
+  }
+  if (this->node_value.object_value->count(key) > 0) {
+    // Destroy existing node before replacing
+    delete this->node_value.object_value->at(key);
+  }
+  this->node_value.object_value->insert( {key, node} );
+}
+
+
+void JSON_node::addChildNode(JSON_node* node)
+{
+  if (this->node_type != JSON_nodetype::JSON_nodetype_array) {
+    throw std::runtime_error("Not an array node");
+  }
+  this->node_value.array_value->push_back(node);
 }
 

@@ -14,6 +14,9 @@ int main(int argc, char* argv[])
     // Parse JSON document from a file
     json.load(argv[i]);
 
+    // Set node by id
+    json.setNumber("TEST", 123);
+
     // Pretty-print JSON to STDOUT
     std::cout << json << std::endl;
 
