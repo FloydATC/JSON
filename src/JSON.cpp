@@ -78,7 +78,17 @@ std::vector<std::string> JSON::split_path_elements(std::string path)
 
 std::string JSON::join_path_elements(std::vector<std::string> elements)
 {
-  return "";
+  std::stringstream sstream;
+  std::string path;
+  size_t count = elements.size();
+  size_t index = 0;
+  for (auto& element : elements) {
+    sstream << element;
+    if (index < count) sstream << ".";
+    index++;
+  } 
+  sstream >> path;
+  return path;
 }
 
 
@@ -169,6 +179,7 @@ void JSON::setString(std::string path, std::string value)
 
 std::ostream& operator<< (std::ostream& ostream, const JSON_node& json_node)
 {
+  if (&json_node == nullptr) throw std::runtime_error("Invalid node");
   json_node.dump(ostream);
   return ostream;
 }

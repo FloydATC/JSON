@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     json.load(argv[i]);
 
     // Set node by id
-    json.setNumber("TEST", 123);
+    json.setNumber("nullobj.TEST", 123);
 
     // Pretty-print JSON to STDOUT
     std::cout << json << std::endl;
