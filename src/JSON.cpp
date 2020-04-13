@@ -115,7 +115,10 @@ void JSON::setNode(std::string path, JSON_node* node)
     elements.pop_back();
     std::string parent_path = this->join_path_elements(elements);
     JSON_node* parent_node = this->getNode(parent_path);
-    if (parent_node == nullptr) throw std::runtime_error("Not found: '" + path + "'");
+    if (parent_node == nullptr) {
+      delete node;
+      throw std::runtime_error("Not found: '" + path + "'");
+    }
     // Is the parent node an array?
     if (parent_node->isArray()) {
       parent_node->setChildByIndex(std::stoul(id), node);
@@ -127,7 +130,10 @@ void JSON::setNode(std::string path, JSON_node* node)
       return;
     }
     // None of the above? Then it can't have an id
-    if (parent_node == nullptr) throw std::runtime_error("Not a container node: '" + parent_path + "'");
+    if (parent_node == nullptr) {
+      delete node;
+      throw std::runtime_error("Not a container node: '" + parent_path + "'");
+    }
   }
 }
 
@@ -686,9 +692,11 @@ JSON_node* JSON_node::getChildByKey(std::string key)
 void JSON_node::setChildByIndex(size_t index, JSON_node* node)
 {
   if (this->node_type != JSON_nodetype::JSON_nodetype_array) {
+    delete node;
     throw std::runtime_error("Not an array node");
   }
   if (index > this->node_value.array_value->size() -1) {
+    delete node;
     throw std::runtime_error("Index out of range");
   }
   // Destroy existing node before replacing
@@ -700,6 +708,7 @@ void JSON_node::setChildByIndex(size_t index, JSON_node* node)
 void JSON_node::setChildByKey(std::string key, JSON_node* node)
 {
   if (this->node_type != JSON_nodetype::JSON_nodetype_object) {
+    delete node;
     throw std::runtime_error("Not an array node");
   }
   if (this->node_value.object_value->count(key) > 0) {
@@ -713,6 +722,7 @@ void JSON_node::setChildByKey(std::string key, JSON_node* node)
 void JSON_node::addChildNode(JSON_node* node)
 {
   if (this->node_type != JSON_nodetype::JSON_nodetype_array) {
+    delete node;
     throw std::runtime_error("Not an array node");
   }
   this->node_value.array_value->push_back(node);
