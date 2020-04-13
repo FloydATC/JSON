@@ -20,7 +20,7 @@ JSON::JSON()
 {
   std::stringstream sstream;
   sstream << "null";
-  this->root = new JSON_node(sstream);
+  this->root = new JSON_node(&sstream);
 }
 
 
@@ -43,7 +43,7 @@ void JSON::load(std::string filename)
 void JSON::parse(std::istream& istream)
 {
   delete this->root;
-  this->root = new JSON_node(istream);
+  this->root = new JSON_node(&istream);
 }
 
 
@@ -103,12 +103,21 @@ std::ostream& operator<< (std::ostream& ostream, const JSON_node& json_node)
 }
 
 
-JSON_node::JSON_node(std::istream& istream) : istream(istream)
+JSON_node::JSON_node()
 {
-  this->skip_whitespace();
-
   // Set default node type = null
   this->node_type = JSON_nodetype::JSON_nodetype_null;
+  this->istream = nullptr;
+}
+
+
+JSON_node::JSON_node(std::istream* istream)
+{
+  // Set default node type = null
+  this->node_type = JSON_nodetype::JSON_nodetype_null;
+
+  this->istream = istream;
+  this->skip_whitespace();
 
   // Determine node type
   switch(this->peek()) {
@@ -344,7 +353,7 @@ void JSON_node::parse_value()
 
 void JSON_node::error(std::string message)
 {
-  std::string errormsg = message + " near byte " + std::to_string(this->istream.tellg()) + ": '" + (const char)this->peek() + "'";
+  std::string errormsg = message + " near byte " + std::to_string(this->istream->tellg()) + ": '" + (const char)this->peek() + "'";
   throw std::runtime_error(errormsg);
 }
 
@@ -361,7 +370,7 @@ bool JSON_node::advance()
 {
   if (this->is_eof()) return false;
   char c;
-  this->istream.get(c);
+  this->istream->get(c);
   this->current = c;
   return true;
 }
@@ -370,13 +379,13 @@ bool JSON_node::advance()
 uint8_t JSON_node::peek()
 {
   if (this->is_eof()) return 0;
-  return this->istream.peek();
+  return this->istream->peek();
 }
 
 
 bool JSON_node::is_eof()
 {
-  return this->istream.eof();
+  return this->istream->eof();
 }
 
 

@@ -4,7 +4,7 @@
 	"bar": 2 , 
 	baz: "hello world" , 
 	"escape": "\n",
-	quuz : [ 10 , -20 , 3.14, { working_as_intended: "yes", bugs: 0.0 } ],
+	quuz : [ 10 , -20 , 3.14, { working_as_intended: "yes", bugs: 0.0, "ironic": true } ],
 	empty: [],
 	nullobj: {}
 }

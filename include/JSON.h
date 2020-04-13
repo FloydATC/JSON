@@ -42,7 +42,8 @@ union JSON_nodevalue {
 */
 class JSON_node {
   public:
-    JSON_node(std::istream& istream);
+    JSON_node();
+    JSON_node(std::istream* istream);
     ~JSON_node();
 
     JSON_nodetype nodeType();
@@ -87,7 +88,7 @@ class JSON_node {
     bool is_whitespace();
     void skip_whitespace();
 
-    std::istream& istream;
+    std::istream* istream;
     uint8_t current;
     JSON_nodetype node_type;
     JSON_nodevalue node_value;
