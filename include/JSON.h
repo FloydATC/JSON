@@ -2,6 +2,7 @@
 #define JSON_HEADER
 
 
+#include <memory>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -20,17 +21,11 @@ enum class JSON_nodetype {
   JSON_nodetype_object
 };
 
+typedef std::shared_ptr<JSON_node> JSON_nodeptr;
 typedef std::string JSON_stringtype;
-typedef std::vector<JSON_node*> JSON_arraytype;
-typedef std::unordered_map<std::string, JSON_node*> JSON_objecttype;
+typedef std::vector<JSON_nodeptr> JSON_arraytype;
+typedef std::unordered_map<std::string, JSON_nodeptr> JSON_objecttype;
 
-union JSON_nodevalue {
-  bool boolean_value;
-  double number_value;
-  JSON_stringtype* string_value;
-  JSON_arraytype* array_value;
-  JSON_objecttype* object_value;
-};
 
 
 /*
@@ -58,11 +53,11 @@ class JSON_node {
     bool isArray();
     bool isObject();
 
-    JSON_node* getChildByIndex(size_t index);
-    JSON_node* getChildByKey(std::string key);
-    void setChildByIndex(size_t index, JSON_node* node);
-    void setChildByKey(std::string key, JSON_node* node);
-    void addChildNode(JSON_node* node);
+    JSON_nodeptr getChildByIndex(size_t index);
+    JSON_nodeptr getChildByKey(std::string key);
+    void setChildByIndex(size_t index, JSON_node node);
+    void setChildByKey(std::string key, JSON_node node);
+    void addChildNode(JSON_node node);
 
   protected:
 
@@ -95,7 +90,13 @@ class JSON_node {
     std::istream* istream;
     uint8_t current;
     JSON_nodetype node_type;
-    JSON_nodevalue node_value;
+
+    bool boolean_value;
+    double number_value;
+    JSON_stringtype string_value;
+    JSON_arraytype array_value;
+    JSON_objecttype object_value;
+
 };
 
 std::ostream& operator<< (std::ostream& os, const JSON_node& json);
@@ -119,8 +120,8 @@ class JSON
     void save(std::string filename) const;
     void dump(std::ostream& ostream) const;
 
-    JSON_node* getNode(std::string path);
-    void setNode(std::string path, JSON_node* node);
+    JSON_nodeptr getNode(std::string path);
+    void setNode(std::string path, JSON_node node);
     void setBoolean(std::string path, bool value);
     void setNumber(std::string path, double value);
     void setString(std::string path, std::string string);
@@ -128,7 +129,7 @@ class JSON
   protected:
 
   private:
-    JSON_node* root;
+    JSON_nodeptr root;
 
     std::vector<std::string> split_path_elements(std::string path);
     std::string join_path_elements(std::vector<std::string> elements);
